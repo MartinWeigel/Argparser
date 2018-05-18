@@ -1,11 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#define ARGPARSE_IMPLEMENTATION
 #include "argparse.h"
 
 static const char *const usages[] = {
-    "test_argparse [options] [[--] args]",
-    "test_argparse [options]",
+    "example [options] [[--] args]",
+    "example [options]",
     NULL,
 };
 
@@ -13,15 +11,17 @@ static const char *const usages[] = {
 #define PERM_WRITE (1<<1)
 #define PERM_EXEC  (1<<2)
 
-int
-main(int argc, const char **argv)
+int main(int argc, const char **argv)
 {
+    // Define variables that will be written using argparse
     int force = 0;
     int test = 0;
     int int_num = 0;
     float flt_num = 0.f;
     const char *path = NULL;
     int perms = 0;
+
+    // Define all application options
     struct argparse_option options[] = {
         OPT_HELP(),
         OPT_GROUP("Basic options"),
@@ -37,10 +37,15 @@ main(int argc, const char **argv)
         OPT_END(),
     };
 
+    // Parse arguments
     struct argparse argparse;
     argparse_init(&argparse, options, usages, 0);
-    argparse_describe(&argparse, "\nA brief description of what the program does and how it works.", "\nAdditional description of the program after the description of the arguments.");
+    argparse_describe(&argparse,
+        "\nA brief description of what the program does and how it works.",
+        "\nAdditional description of the program after the description of the arguments.");
     argc = argparse_parse(&argparse, argc, argv);
+
+    // Display all results that are not their default
     if (force != 0)
         printf("force: %d\n", force);
     if (test != 0)
