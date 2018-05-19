@@ -1,12 +1,6 @@
 #define ARGPARSER_IMPLEMENTATION
 #include "Argparser.h"
 
-static const char *const usages[] = {
-    "example [options] [[--] args]",
-    "example [options]",
-    NULL,
-};
-
 int test_callback(Argparser* argparser, const ArgparserOption* option)
 { 
     int* value = ((int*)option->value);
@@ -26,8 +20,8 @@ int main(int argc, const char **argv)
 
     // Define all application options
     ArgparserOption options[] = {
-        ARGPARSER_OPT_HELP(),
         ARGPARSER_OPT_GROUP("Basic Options"),
+        ARGPARSER_OPT_HELP(),
         ARGPARSER_OPT_BOOL('f', "force", &force, "force to do"),
         ARGPARSER_OPT_STRING('p', "path", &path, "path to read"),
         ARGPARSER_OPT_INT('i', "int", &int_num, "selected integer"),
@@ -39,7 +33,8 @@ int main(int argc, const char **argv)
 
     // Parse arguments
     Argparser* argparser = Argparser_new();
-    Argparser_init(argparser, options, usages);
+    Argparser_init(argparser, options);
+    Argparser_setUsage(argparser, "example [options] [[--] args");
     Argparser_setDescription(argparser, "\nOptional brief description of what the program does and how it works.");
     Argparser_setEpilog(argparser, "\nOptional description of the program after the description of the arguments.");
     argc = Argparser_parse(argparser, argc, argv);

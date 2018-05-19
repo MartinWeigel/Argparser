@@ -12,7 +12,8 @@ typedef int Argparser_callback(Argparser* self, const ArgparserOption* option);
 
 // Public functions
 Argparser* Argparser_new();
-void Argparser_init(Argparser* self, ArgparserOption* options, const char *const *usages);
+void Argparser_init(Argparser* self, ArgparserOption* options);
+void Argparser_setUsage(Argparser* self, const char* usage);
 void Argparser_setDescription(Argparser* self, const char* description);
 void Argparser_setEpilog(Argparser* self, const char* epilog);
 void Argparser_setStopAtNonOption(Argparser* self, bool stop);
@@ -73,7 +74,7 @@ typedef struct ArgparserOption {
 typedef struct Argparser {
     bool valid;
     const ArgparserOption *options;
-    const char *const *usages;
+    const char *usage;
     const char *description;
     const char *epilog;
     bool stopAtNonOption;
@@ -106,12 +107,27 @@ Argparser* Argparser_new()
     return self;
 }
 
-void Argparser_init(Argparser* self, ArgparserOption* options, const char* const* usages)
+void Argparser_init(Argparser* self, ArgparserOption* options)
 {
     self->options = options;
-    self->usages = usages;
     self->stopAtNonOption = false;
     self->valid = true;
+}
+
+void Argparser_clear(Argparser* self)
+{
+    self->valid = false;
+    memset(self, 0, sizeof(*self));
+}
+
+void Argparser_delete(Argparser* self)
+{
+    free(self);
+}
+
+void Argparser_setUsage(Argparser* self, const char* usage)
+{
+    self->usage = usage;
 }
 
 void Argparser_setDescription(Argparser* self, const char* description)
@@ -127,17 +143,6 @@ void Argparser_setEpilog(Argparser* self, const char* epilog)
 void Argparser_setStopAtNonOption(Argparser* self, bool stop)
 {
     self->stopAtNonOption = stop;
-}
-
-void Argparser_clear(Argparser* self)
-{
-    self->valid = false;
-    memset(self, 0, sizeof(*self));
-}
-
-void Argparser_delete(Argparser* self)
-{
-    free(self);
 }
 
 void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, int flags)
@@ -269,13 +274,9 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
 
 void Argparser_usage(Argparser* self)
 {
-    if (self->usages) {
-        fprintf(stdout, "Usage: %s\n", *self->usages++);
-        while (*self->usages && **self->usages)
-            fprintf(stdout, "   or: %s\n", *self->usages++);
-    } else {
-        fprintf(stdout, "Usage:\n");
-    }
+    // print usage
+    if (self->usage)
+        fprintf(stdout, "Usage: %s\n", self->usage);
 
     // print description
     if (self->description)
