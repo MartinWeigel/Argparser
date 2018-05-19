@@ -95,8 +95,8 @@ typedef struct Argparser {
 #include <assert.h>
 #include <errno.h>
 
-#define OPT_UNSET 1
-#define OPT_LONG  (1 << 1)
+#define ARGPARSER_OPTFLAG_UNSET 1
+#define ARGPARSER_OPTFLAG_LONG  (1 << 1)
 
 const char* Argparser_prefix_skip(const char *str, const char *prefix)
 {
@@ -106,7 +106,7 @@ const char* Argparser_prefix_skip(const char *str, const char *prefix)
 
 void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, int flags)
 {
-    if (flags & OPT_LONG) {
+    if (flags & ARGPARSER_OPTFLAG_LONG) {
         fprintf(stderr, "error: option `--%s` %s\n", opt->long_name, reason);
     } else {
         fprintf(stderr, "error: option `-%c` %s\n", opt->short_name, reason);
@@ -120,7 +120,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
     if (opt->value) {
         switch (opt->type) {
         case ARGPARSER_TYPE_BOOLEAN:
-            if (flags & OPT_UNSET) {
+            if (flags & ARGPARSER_OPTFLAG_UNSET) {
                 *(int *)opt->value = *(int *)opt->value - 1;
             } else {
                 *(int *)opt->value = *(int *)opt->value + 1;
@@ -225,7 +225,7 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
                 continue;
             self->optvalue = rest + 1;
         }
-        return Argparser_getvalue(self, options, OPT_LONG);
+        return Argparser_getvalue(self, options, ARGPARSER_OPTFLAG_LONG);
     }
     return -2;
 }
