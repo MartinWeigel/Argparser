@@ -98,6 +98,48 @@ typedef struct Argparser {
 #define ARGPARSER_OPTFLAG_UNSET 1
 #define ARGPARSER_OPTFLAG_LONG  (1 << 1)
 
+
+Argparser* Argparser_new()
+{
+    Argparser* self = malloc(sizeof(Argparser));
+    memset(self, 0, sizeof(*self));
+    return self;
+}
+
+void Argparser_init(Argparser* self, ArgparserOption* options, const char* const* usages)
+{
+    self->options = options;
+    self->usages = usages;
+    self->stopAtNonOption = false;
+    self->valid = true;
+}
+
+void Argparser_setDescription(Argparser* self, const char* description)
+{
+    self->description = description;
+}
+
+void Argparser_setEpilog(Argparser* self, const char* epilog)
+{
+    self->epilog = epilog;
+}
+
+void Argparser_setStopAtNonOption(Argparser* self, bool stop)
+{
+    self->stopAtNonOption = stop;
+}
+
+void Argparser_clear(Argparser* self)
+{
+    self->valid = false;
+    memset(self, 0, sizeof(*self));
+}
+
+void Argparser_delete(Argparser* self)
+{
+    free(self);
+}
+
 void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, int flags)
 {
     if (flags & ARGPARSER_OPTFLAG_LONG) {
@@ -225,49 +267,6 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
     return -2;
 }
 
-
-Argparser* Argparser_new()
-{
-    Argparser* self = malloc(sizeof(Argparser));
-    memset(self, 0, sizeof(*self));
-    return self;
-}
-
-void Argparser_init(Argparser* self, ArgparserOption* options, const char* const* usages)
-{
-    self->options = options;
-    self->usages = usages;
-    self->stopAtNonOption = false;
-    self->valid = true;
-}
-
-void Argparser_setDescription(Argparser* self, const char* description)
-{
-    self->description = description;
-}
-
-void Argparser_setEpilog(Argparser* self, const char* epilog)
-{
-    self->epilog = epilog;
-}
-
-void Argparser_setStopAtNonOption(Argparser* self, bool stop)
-{
-    self->stopAtNonOption = stop;
-}
-
-void Argparser_clear(Argparser* self)
-{
-    self->valid = false;
-    memset(self, 0, sizeof(*self));
-}
-
-void Argparser_delete(Argparser* self)
-{
-    free(self);
-}
-
-
 void Argparser_usage(Argparser* self)
 {
     if (self->usages) {
@@ -358,6 +357,12 @@ void Argparser_usage(Argparser* self)
         fprintf(stdout, "%s\n", self->epilog);
 }
 
+int Argparser_help_cb(Argparser* self, const ArgparserOption* option)
+{ 
+    Argparser_usage(self);
+    exit(0);
+}
+
 int Argparser_parse(Argparser* self, int argc, const char **argv)
 {
     assert(self->valid);
@@ -424,12 +429,6 @@ end:
     self->out[self->cpidx + self->argc] = NULL;
 
     return self->cpidx + self->argc;
-}
-
-int Argparser_help_cb(Argparser* self, const ArgparserOption* option)
-{ 
-    Argparser_usage(self);
-    exit(0);
 }
 
 #endif
