@@ -98,12 +98,6 @@ typedef struct Argparser {
 #define ARGPARSER_OPTFLAG_UNSET 1
 #define ARGPARSER_OPTFLAG_LONG  (1 << 1)
 
-const char* Argparser_prefix_skip(const char *str, const char *prefix)
-{
-    size_t len = strlen(prefix);
-    return strncmp(str, prefix, len) ? NULL : str + len;
-}
-
 void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, int flags)
 {
     if (flags & ARGPARSER_OPTFLAG_LONG) {
@@ -215,11 +209,12 @@ int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
 int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
 {
     for (; options->type != ARGPARSER_TYPE_END; options++) {
-        const char *rest;
         if (!options->long_name)
             continue;
 
-        rest = Argparser_prefix_skip(self->argv[0] + 2, options->long_name);
+        size_t nameLength = strlen(options->long_name);
+        const char *rest = strncmp(self->argv[0] + 2, options->long_name, nameLength) ?
+            NULL : self->argv[0] + 2 + nameLength;
         if (rest) {
             if (*rest != '=')
                 continue;
