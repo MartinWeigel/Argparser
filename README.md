@@ -1,4 +1,4 @@
-# Argparse
+# Argparser
 
 A single-header command line argument-parser library written in C.
 

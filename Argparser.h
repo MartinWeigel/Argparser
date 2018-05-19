@@ -5,7 +5,24 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum argparser_flag {
+// Type definitions
+typedef struct Argparser Argparser;
+typedef struct ArgparserOption ArgparserOption;
+typedef int Argparser_callback(Argparser* self, const ArgparserOption* option);
+
+// Public functions
+Argparser* Argparser_new();
+void Argparser_init(Argparser* self,
+    ArgparserOption* options, const char *const *usages, int flags);
+void Argparser_setDescription(Argparser* self, const char* description);
+void Argparser_setEpilog(Argparser* self, const char* epilog);
+int Argparser_parse(Argparser* self, int argc, const char **argv);
+void Argparser_clear(Argparser* self);
+void Argparser_delete(Argparser* self);
+
+
+// Defining the data types
+enum Argparser_flag {
     ARGPARSER_STOP_AT_NON_OPTION = 1,
 };
 
@@ -21,13 +38,6 @@ enum ArgparserOptionType {
     ARGPARSER_OPT_STRING,
 };
 
-enum argparser_option_flags {
-    OPT_NONEG = 1,              /* disable negation */
-};
-
-// Built-in callbacks
-typedef int Argparser_callback(void* self, const void* option);
-int Argparser_help_cb(void* self, const void* option);
 
 /**
  *  argparse option
@@ -51,12 +61,7 @@ int Argparser_help_cb(void* self, const void* option);
  *
  *  `callback`:
  *    function is called when corresponding argument is parsed.
- *
- *  `data`:
- *    associated data. Callbacks can use it like they want.
- *
- *  `flags`:
- *    option flags.
+ *    when called, the value is set in ArgparserOption->value.
  */
 typedef struct ArgparserOption {
     enum ArgparserOptionType type;
@@ -65,20 +70,36 @@ typedef struct ArgparserOption {
     void *value;
     const char *help;
     Argparser_callback *callback;
-    intptr_t data;
-    int flags;
 } ArgparserOption;
 
-// built-in option macros
-#define OPT_END()        { ARGPARSER_OPT_END, 0, NULL, NULL, 0, NULL, 0, 0 }
-#define OPT_BOOLEAN(...) { ARGPARSER_OPT_BOOLEAN, __VA_ARGS__ }
-#define OPT_INTEGER(...) { ARGPARSER_OPT_INTEGER, __VA_ARGS__ }
-#define OPT_FLOAT(...)   { ARGPARSER_OPT_FLOAT, __VA_ARGS__ }
-#define OPT_STRING(...)  { ARGPARSER_OPT_STRING, __VA_ARGS__ }
-#define OPT_GROUP(h)     { ARGPARSER_OPT_GROUP, 0, NULL, NULL, h, NULL, 0, 0 }
-#define OPT_HELP()       OPT_BOOLEAN('h', "help", NULL,                 \
-                                     "show this help message and exit", \
-                                     Argparser_help_cb, 0, 0)
+// Built-in callbacks
+int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
+
+// Macros to create ArgparserOption
+#define ARGPARSER_OPT_BOOL(shortName, longName, valuePtr, description) \
+    { ARGPARSER_OPT_BOOLEAN, shortName, longName, valuePtr, description }
+#define ARGPARSER_OPT_BOOL_CALLBACK(shortName, longName, valuePtr, description, callback) \
+    { ARGPARSER_OPT_BOOLEAN, shortName, longName, valuePtr, description, callback }
+
+#define ARGPARSER_OPT_INT(shortName, longName, valuePtr, description) \
+    { ARGPARSER_OPT_INTEGER, shortName, longName, valuePtr, description }
+#define ARGPARSER_OPT_INT_CALLBACK(shortName, longName, valuePtr, description, callback) \
+    { ARGPARSER_OPT_INTEGER, shortName, longName, valuePtr, description, callback }
+
+#define ARGPARSER_OPT_FLOAT(shortName, longName, valuePtr, description) \
+    { ARGPARSER_OPT_FLOAT, shortName, longName, valuePtr, description }
+#define ARGPARSER_OPT_FLOAT_CALLBACK(shortName, longName, valuePtr, description, callback) \
+    { ARGPARSER_OPT_FLOAT, shortName, longName, valuePtr, description, callback }
+
+#define ARGPARSER_OPT_STRING(shortName, longName, valuePtr, description) \
+    { ARGPARSER_OPT_STRING, shortName, longName, valuePtr, description }
+#define ARGPARSER_OPT_STRING_CALLBACK(shortName, longName, valuePtr, description, callback) \
+    { ARGPARSER_OPT_STRING, shortName, longName, valuePtr, description, callback }
+
+#define ARGPARSER_OPT_END()                  { ARGPARSER_OPT_END, 0, NULL, NULL, 0, NULL }
+#define ARGPARSER_OPT_GROUP(description)     { ARGPARSER_OPT_GROUP, 0, NULL, NULL, description, NULL }
+#define ARGPARSER_OPT_HELP()       \
+    ARGPARSER_OPT_BOOL_CALLBACK('h', "help", NULL, "show this help message and exit", Argparser_help_cb)
 
 typedef struct Argparser {
     bool valid;
@@ -96,16 +117,6 @@ typedef struct Argparser {
     const char *optvalue;       // current option value
 } Argparser;
 
-
-// The following functions should be used from your application
-Argparser* Argparser_new();
-void Argparser_init(Argparser* self,
-    ArgparserOption* options, const char *const *usages, int flags);
-void Argparser_setDescription(Argparser* self, const char* description);
-void Argparser_setEpilog(Argparser* self, const char* epilog);
-int Argparser_parse(Argparser* self, int argc, const char **argv);
-void Argparser_clear(Argparser* self);
-void Argparser_delete(Argparser* self);
 
 
 
@@ -238,35 +249,16 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
 {
     for (; options->type != ARGPARSER_OPT_END; options++) {
         const char *rest;
-        int opt_flags = 0;
         if (!options->long_name)
             continue;
 
         rest = Argparser_prefix_skip(self->argv[0] + 2, options->long_name);
-        if (!rest) {
-            // negation disabled?
-            if (options->flags & OPT_NONEG) {
-                continue;
-            }
-            // only OPT_BOOLEAN/OPT_BIT supports negation
-            if (options->type != ARGPARSER_OPT_BOOLEAN) {
-                continue;
-            }
-
-            if (strncmp(self->argv[0] + 2, "no-", 3)) {
-                continue;
-            }
-            rest = Argparser_prefix_skip(self->argv[0] + 2 + 3, options->long_name);
-            if (!rest)
-                continue;
-            opt_flags |= OPT_UNSET;
-        }
-        if (*rest) {
+        if (rest && *rest) {
             if (*rest != '=')
                 continue;
             self->optvalue = rest + 1;
         }
-        return Argparser_getvalue(self, options, opt_flags | OPT_LONG);
+        return Argparser_getvalue(self, options, OPT_LONG);
     }
     return -2;
 }
@@ -468,7 +460,7 @@ end:
     return self->cpidx + self->argc;
 }
 
-int Argparser_help_cb(void* self, const void* option)
+int Argparser_help_cb(Argparser* self, const ArgparserOption* option)
 { 
     Argparser_usage(self);
     exit(0);

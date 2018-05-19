@@ -7,6 +7,13 @@ static const char *const usages[] = {
     NULL,
 };
 
+int test_callback(Argparser* argparser, const ArgparserOption* option)
+{ 
+    int* value = ((int*)option->value);
+    printf("Callback called with value: %d\n", *value);
+    return 1;
+}
+
 int main(int argc, const char **argv)
 {
     // Define variables that will be written using argparse
@@ -19,14 +26,15 @@ int main(int argc, const char **argv)
 
     // Define all application options
     ArgparserOption options[] = {
-        OPT_HELP(),
-        OPT_GROUP("Basic options"),
-        OPT_BOOLEAN('f', "force", &force, "force to do"),
-        OPT_BOOLEAN('t', "test", &test, "test only"),
-        OPT_STRING('p', "path", &path, "path to read"),
-        OPT_INTEGER('i', "int", &int_num, "selected integer"),
-        OPT_FLOAT('s', "float", &flt_num, "selected float"),
-        OPT_END(),
+        ARGPARSER_OPT_HELP(),
+        ARGPARSER_OPT_GROUP("Basic Options"),
+        ARGPARSER_OPT_BOOL('f', "force", &force, "force to do"),
+        ARGPARSER_OPT_STRING('p', "path", &path, "path to read"),
+        ARGPARSER_OPT_INT('i', "int", &int_num, "selected integer"),
+        ARGPARSER_OPT_FLOAT('s', "float", &flt_num, "selected float"),
+        ARGPARSER_OPT_GROUP("Options with Callbacks"),
+        ARGPARSER_OPT_INT_CALLBACK('t', "test", &test, "test with callback", test_callback),
+        ARGPARSER_OPT_END(),
     };
 
     // Parse arguments
