@@ -380,6 +380,13 @@ int Argparser_help_cb(Argparser* self, const ArgparserOption* option)
     exit(0);
 }
 
+void Argparser_exitDueToUnknownOption(Argparser* self)
+{
+    fprintf(stderr, "error: unknown option `%s`\n", self->argv[0]);
+    Argparser_usage(self);
+    exit(1);
+}
+
 int Argparser_parse(Argparser* self, int argc, const char **argv)
 {
     assert(self->valid);
@@ -407,14 +414,14 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
             case ARGPARSER_RESULT_ERROR:
                 break;
             case ARGPARSER_RESULT_UNKNOWN:
-                goto unknown;
+                Argparser_exitDueToUnknownOption(self);
             }
             while (self->optvalue) {
                 switch (Argparser_short_opt(self, self->options)) {
                 case ARGPARSER_RESULT_ERROR:
                     break;
                 case ARGPARSER_RESULT_UNKNOWN:
-                    goto unknown;
+                    Argparser_exitDueToUnknownOption(self);
                 }
             }
             continue;
@@ -430,14 +437,9 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
         case ARGPARSER_RESULT_ERROR:
             break;
         case ARGPARSER_RESULT_UNKNOWN:
-            goto unknown;
+            Argparser_exitDueToUnknownOption(self);
         }
         continue;
-
-unknown:
-        fprintf(stderr, "error: unknown option `%s`\n", self->argv[0]);
-        Argparser_usage(self);
-        exit(1);
     }
 
 end:
