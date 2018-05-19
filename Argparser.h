@@ -8,7 +8,14 @@
 // Type definitions
 typedef struct Argparser Argparser;
 typedef struct ArgparserOption ArgparserOption;
-typedef int Argparser_callback(Argparser* self, const ArgparserOption* option);
+
+typedef enum ArgparserResult {
+    ARGPARSER_RESULT_SUCCESS = 0,
+    ARGPARSER_RESULT_ERROR = -1,
+    ARGPARSER_RESULT_UNKNOWN = -2,
+} ArgparserResult;
+
+typedef ArgparserResult Argparser_callback(Argparser* self, const ArgparserOption* option);
 
 // Public functions
 Argparser* Argparser_new();
@@ -221,7 +228,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
     if (opt->callback) {
         return opt->callback(self, opt);
     }
-    return 0;
+    return ARGPARSER_RESULT_SUCCESS;
 }
 
 void Argparser_options_check(const ArgparserOption* options)
@@ -250,7 +257,7 @@ int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
             return Argparser_getvalue(self, options, 0);
         }
     }
-    return -2;
+    return ARGPARSER_RESULT_UNKNOWN;
 }
 
 int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
@@ -269,7 +276,7 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
             return Argparser_getvalue(self, options, ARGPARSER_OPTFLAG_LONG);
         }
     }
-    return -2;
+    return ARGPARSER_RESULT_UNKNOWN;
 }
 
 void Argparser_usage(Argparser* self)
@@ -386,16 +393,16 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
         if (arg[1] != '-') {
             self->optvalue = arg + 1;
             switch (Argparser_short_opt(self, self->options)) {
-            case -1:
+            case ARGPARSER_RESULT_ERROR:
                 break;
-            case -2:
+            case ARGPARSER_RESULT_UNKNOWN:
                 goto unknown;
             }
             while (self->optvalue) {
                 switch (Argparser_short_opt(self, self->options)) {
-                case -1:
+                case ARGPARSER_RESULT_ERROR:
                     break;
-                case -2:
+                case ARGPARSER_RESULT_UNKNOWN:
                     goto unknown;
                 }
             }
@@ -409,9 +416,9 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
         }
         // long option
         switch (Argparser_long_opt(self, self->options)) {
-        case -1:
+        case ARGPARSER_RESULT_ERROR:
             break;
-        case -2:
+        case ARGPARSER_RESULT_UNKNOWN:
             goto unknown;
         }
         continue;
