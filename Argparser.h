@@ -220,12 +220,12 @@ int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
             continue;
 
         rest = Argparser_prefix_skip(self->argv[0] + 2, options->long_name);
-        if (rest && *rest) {
+        if (rest) {
             if (*rest != '=')
                 continue;
             self->optvalue = rest + 1;
+            return Argparser_getvalue(self, options, ARGPARSER_OPTFLAG_LONG);
         }
-        return Argparser_getvalue(self, options, ARGPARSER_OPTFLAG_LONG);
     }
     return -2;
 }
