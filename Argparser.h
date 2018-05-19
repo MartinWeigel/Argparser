@@ -28,14 +28,14 @@ enum Argparser_flag {
 
 enum ArgparserOptionType {
     /* special */
-    ARGPARSER_OPT_END,
-    ARGPARSER_OPT_GROUP,
+    ARGPARSER_TYPE_END,
+    ARGPARSER_TYPE_GROUP,
     /* options with no arguments */
-    ARGPARSER_OPT_BOOLEAN,
+    ARGPARSER_TYPE_BOOLEAN,
     /* options with arguments (optional or required) */
-    ARGPARSER_OPT_INTEGER,
-    ARGPARSER_OPT_FLOAT,
-    ARGPARSER_OPT_STRING,
+    ARGPARSER_TYPE_INTEGER,
+    ARGPARSER_TYPE_FLOAT,
+    ARGPARSER_TYPE_STRING,
 };
 
 
@@ -43,7 +43,7 @@ enum ArgparserOptionType {
  *  argparse option
  *
  *  `type`:
- *    holds the type of the option, you must have an ARGPARSER_OPT_END last in your
+ *    holds the type of the option, you must have an ARGPARSER_TYPE_END last in your
  *    array.
  *
  *  `short_name`:
@@ -57,7 +57,7 @@ enum ArgparserOptionType {
  *
  *  `help`:
  *    the short help message associated to what the option does.
- *    Must never be NULL (except for ARGPARSER_OPT_END).
+ *    Must never be NULL (except for ARGPARSER_TYPE_END).
  *
  *  `callback`:
  *    function is called when corresponding argument is parsed.
@@ -77,27 +77,27 @@ int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
 
 // Macros to create ArgparserOption
 #define ARGPARSER_OPT_BOOL(shortName, longName, valuePtr, description) \
-    { ARGPARSER_OPT_BOOLEAN, shortName, longName, valuePtr, description }
+    { ARGPARSER_TYPE_BOOLEAN, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_BOOL_CALLBACK(shortName, longName, valuePtr, description, callback) \
-    { ARGPARSER_OPT_BOOLEAN, shortName, longName, valuePtr, description, callback }
+    { ARGPARSER_TYPE_BOOLEAN, shortName, longName, valuePtr, description, callback }
 
 #define ARGPARSER_OPT_INT(shortName, longName, valuePtr, description) \
-    { ARGPARSER_OPT_INTEGER, shortName, longName, valuePtr, description }
+    { ARGPARSER_TYPE_INTEGER, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_INT_CALLBACK(shortName, longName, valuePtr, description, callback) \
-    { ARGPARSER_OPT_INTEGER, shortName, longName, valuePtr, description, callback }
+    { ARGPARSER_TYPE_INTEGER, shortName, longName, valuePtr, description, callback }
 
 #define ARGPARSER_OPT_FLOAT(shortName, longName, valuePtr, description) \
-    { ARGPARSER_OPT_FLOAT, shortName, longName, valuePtr, description }
+    { ARGPARSER_TYPE_FLOAT, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_FLOAT_CALLBACK(shortName, longName, valuePtr, description, callback) \
-    { ARGPARSER_OPT_FLOAT, shortName, longName, valuePtr, description, callback }
+    { ARGPARSER_TYPE_FLOAT, shortName, longName, valuePtr, description, callback }
 
 #define ARGPARSER_OPT_STRING(shortName, longName, valuePtr, description) \
-    { ARGPARSER_OPT_STRING, shortName, longName, valuePtr, description }
+    { ARGPARSER_TYPE_STRING, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_STRING_CALLBACK(shortName, longName, valuePtr, description, callback) \
-    { ARGPARSER_OPT_STRING, shortName, longName, valuePtr, description, callback }
+    { ARGPARSER_TYPE_STRING, shortName, longName, valuePtr, description, callback }
 
-#define ARGPARSER_OPT_END()                  { ARGPARSER_OPT_END, 0, NULL, NULL, 0, NULL }
-#define ARGPARSER_OPT_GROUP(description)     { ARGPARSER_OPT_GROUP, 0, NULL, NULL, description, NULL }
+#define ARGPARSER_OPT_END()                  { ARGPARSER_TYPE_END, 0, NULL, NULL, 0, NULL }
+#define ARGPARSER_OPT_GROUP(description)     { ARGPARSER_TYPE_GROUP, 0, NULL, NULL, description, NULL }
 #define ARGPARSER_OPT_HELP()       \
     ARGPARSER_OPT_BOOL_CALLBACK('h', "help", NULL, "show this help message and exit", Argparser_help_cb)
 
@@ -152,7 +152,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
     const char *s = NULL;
     if (opt->value) {
         switch (opt->type) {
-        case ARGPARSER_OPT_BOOLEAN:
+        case ARGPARSER_TYPE_BOOLEAN:
             if (flags & OPT_UNSET) {
                 *(int *)opt->value = *(int *)opt->value - 1;
             } else {
@@ -162,7 +162,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
                 *(int *)opt->value = 0;
             }
             break;
-        case ARGPARSER_OPT_STRING:
+        case ARGPARSER_TYPE_STRING:
             if (self->optvalue) {
                 *(const char **)opt->value = self->optvalue;
                 self->optvalue             = NULL;
@@ -173,7 +173,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
                 Argparser_error(self, opt, "requires a value", flags);
             }
             break;
-        case ARGPARSER_OPT_INTEGER:
+        case ARGPARSER_TYPE_INTEGER:
             errno = 0; 
             if (self->optvalue) {
                 *(int *)opt->value = strtol(self->optvalue, (char **)&s, 0);
@@ -189,7 +189,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
             if (s[0] != '\0')
                 Argparser_error(self, opt, "expects an integer value", flags);
             break;
-        case ARGPARSER_OPT_FLOAT:
+        case ARGPARSER_TYPE_FLOAT:
             errno = 0; 
             if (self->optvalue) {
                 *(float *)opt->value = strtof(self->optvalue, (char **)&s);
@@ -218,14 +218,14 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
 
 void Argparser_options_check(const ArgparserOption* options)
 {
-    for (; options->type != ARGPARSER_OPT_END; options++) {
+    for (; options->type != ARGPARSER_TYPE_END; options++) {
         switch (options->type) {
-        case ARGPARSER_OPT_END:
-        case ARGPARSER_OPT_BOOLEAN:
-        case ARGPARSER_OPT_INTEGER:
-        case ARGPARSER_OPT_FLOAT:
-        case ARGPARSER_OPT_STRING:
-        case ARGPARSER_OPT_GROUP:
+        case ARGPARSER_TYPE_END:
+        case ARGPARSER_TYPE_BOOLEAN:
+        case ARGPARSER_TYPE_INTEGER:
+        case ARGPARSER_TYPE_FLOAT:
+        case ARGPARSER_TYPE_STRING:
+        case ARGPARSER_TYPE_GROUP:
             continue;
         default:
             fprintf(stderr, "wrong option type: %d", options->type);
@@ -236,7 +236,7 @@ void Argparser_options_check(const ArgparserOption* options)
 
 int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
 {
-    for (; options->type != ARGPARSER_OPT_END; options++) {
+    for (; options->type != ARGPARSER_TYPE_END; options++) {
         if (options->short_name == *self->optvalue) {
             self->optvalue = self->optvalue[1] ? self->optvalue + 1 : NULL;
             return Argparser_getvalue(self, options, 0);
@@ -247,7 +247,7 @@ int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
 
 int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
 {
-    for (; options->type != ARGPARSER_OPT_END; options++) {
+    for (; options->type != ARGPARSER_TYPE_END; options++) {
         const char *rest;
         if (!options->long_name)
             continue;
@@ -324,7 +324,7 @@ void Argparser_usage(Argparser* self)
     size_t usage_opts_width = 0;
     size_t len;
     options = self->options;
-    for (; options->type != ARGPARSER_OPT_END; options++) {
+    for (; options->type != ARGPARSER_TYPE_END; options++) {
         len = 0;
         if ((options)->short_name) {
             len += 2;
@@ -335,12 +335,12 @@ void Argparser_usage(Argparser* self)
         if ((options)->long_name) {
             len += strlen((options)->long_name) + 2;
         }
-        if (options->type == ARGPARSER_OPT_INTEGER) {
+        if (options->type == ARGPARSER_TYPE_INTEGER) {
             len += strlen("=<int>");
           }
-        if (options->type == ARGPARSER_OPT_FLOAT) {
+        if (options->type == ARGPARSER_TYPE_FLOAT) {
             len += strlen("=<flt>");
-        } else if (options->type == ARGPARSER_OPT_STRING) {
+        } else if (options->type == ARGPARSER_TYPE_STRING) {
             len += strlen("=<str>");
         }
         len = (len + 3) - ((len + 3) & 3);
@@ -351,10 +351,10 @@ void Argparser_usage(Argparser* self)
     usage_opts_width += 4;      // 4 spaces prefix
 
     options = self->options;
-    for (; options->type != ARGPARSER_OPT_END; options++) {
+    for (; options->type != ARGPARSER_TYPE_END; options++) {
         size_t pos = 0;
         int pad    = 0;
-        if (options->type == ARGPARSER_OPT_GROUP) {
+        if (options->type == ARGPARSER_TYPE_GROUP) {
             fputc('\n', stdout);
             fprintf(stdout, "%s", options->help);
             fputc('\n', stdout);
@@ -370,12 +370,12 @@ void Argparser_usage(Argparser* self)
         if (options->long_name) {
             pos += fprintf(stdout, "--%s", options->long_name);
         }
-        if (options->type == ARGPARSER_OPT_INTEGER) {
+        if (options->type == ARGPARSER_TYPE_INTEGER) {
             pos += fprintf(stdout, "=<int>");
         }
-        if (options->type == ARGPARSER_OPT_FLOAT) {
+        if (options->type == ARGPARSER_TYPE_FLOAT) {
             pos += fprintf(stdout, "=<flt>");
-        } else if (options->type == ARGPARSER_OPT_STRING) {
+        } else if (options->type == ARGPARSER_TYPE_STRING) {
             pos += fprintf(stdout, "=<str>");
         }
         if (pos <= usage_opts_width) {
