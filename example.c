@@ -1,5 +1,6 @@
 #define ARGPARSER_IMPLEMENTATION
 #include "Argparser.h"
+#include <stdbool.h>
 
 ArgparserResult test_callback(Argparser* argparser, const ArgparserOption* option)
 { 
@@ -12,14 +13,14 @@ int main(int argc, const char **argv)
 {
     // Variables that will be set using Argparser
     // They keep their initial value, if the option is not given.
-    int pBool = 0;
+    bool pBool = 0;
     int pInt = 0;
     float pFloat = 0.f;
     const char *pString = NULL;
-    int pNoShort = 0;
-    int pNoLong = 0;
-    int pUpperCharacters = 0;
-    int pNumeric = 0;
+    bool pNoShort = 0;
+    bool pNoLong = 0;
+    bool pUpperCharacters = 0;
+    bool pNumeric = 0;
     int pIntCallback = 0;
 
     // Parse arguments
@@ -67,8 +68,7 @@ int main(int argc, const char **argv)
     // Print remaining arguments
     if (argc != 0) {
         printf("argc: %d\n", argc);
-        int i;
-        for (i = 0; i < argc; i++) {
+        for (int i = 0; i < argc; i++) {
             printf("argv[%d]: %s\n", i, *(argv + i));
         }
     }
