@@ -18,8 +18,9 @@ int main(int argc, const char **argv)
     const char *path = NULL;
     int perms = 0;
 
-    // Define all application options
-    ArgparserOption options[] = {
+    // Parse arguments
+    Argparser* argparser = Argparser_new();
+    Argparser_init(argparser, (ArgparserOption[]) {
         ARGPARSER_OPT_GROUP("Basic Options"),
         ARGPARSER_OPT_HELP(),
         ARGPARSER_OPT_BOOL('f', "force", &force, "force to do"),
@@ -28,12 +29,8 @@ int main(int argc, const char **argv)
         ARGPARSER_OPT_FLOAT('s', "float", &flt_num, "selected float"),
         ARGPARSER_OPT_GROUP("Options with Callbacks"),
         ARGPARSER_OPT_INT_CALLBACK('t', "test", &test, "test with callback", test_callback),
-        ARGPARSER_OPT_END(),
-    };
-
-    // Parse arguments
-    Argparser* argparser = Argparser_new();
-    Argparser_init(argparser, options);
+        ARGPARSER_OPT_END()
+    });
     Argparser_setUsage(argparser, "example [options] [[--] args");
     Argparser_setDescription(argparser, "Optional brief description of what the program does and how it works.");
     Argparser_setEpilog(argparser, "Optional description of the program after the description of the arguments.");
