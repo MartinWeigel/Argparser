@@ -39,7 +39,7 @@ int main(int argc, const char **argv)
 
     // Parse arguments
     Argparser* argparser = Argparser_new();
-    Argparser_init(argparser, options, usages, 0);
+    Argparser_init(argparser, options, usages);
     Argparser_setDescription(argparser, "\nOptional brief description of what the program does and how it works.");
     Argparser_setEpilog(argparser, "\nOptional description of the program after the description of the arguments.");
     argc = Argparser_parse(argparser, argc, argv);

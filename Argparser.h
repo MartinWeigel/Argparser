@@ -12,19 +12,13 @@ typedef int Argparser_callback(Argparser* self, const ArgparserOption* option);
 
 // Public functions
 Argparser* Argparser_new();
-void Argparser_init(Argparser* self,
-    ArgparserOption* options, const char *const *usages, int flags);
+void Argparser_init(Argparser* self, ArgparserOption* options, const char *const *usages);
 void Argparser_setDescription(Argparser* self, const char* description);
 void Argparser_setEpilog(Argparser* self, const char* epilog);
+void Argparser_setStopAtNonOption(Argparser* self, bool stop);
 int Argparser_parse(Argparser* self, int argc, const char **argv);
 void Argparser_clear(Argparser* self);
 void Argparser_delete(Argparser* self);
-
-
-// Defining the data types
-enum Argparser_flag {
-    ARGPARSER_STOP_AT_NON_OPTION = 1,
-};
 
 enum ArgparserOptionType {
     /* special */
@@ -40,7 +34,7 @@ enum ArgparserOptionType {
 
 
 /**
- *  argparse option
+ *  argparser option
  *
  *  `type`:
  *    holds the type of the option, you must have an ARGPARSER_TYPE_END last in your
@@ -103,13 +97,12 @@ int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
 
 typedef struct Argparser {
     bool valid;
-    // user supplied
     const ArgparserOption *options;
     const char *const *usages;
-    int flags;
     const char *description;    // a description after usage
     const char *epilog;         // a description at the end
-    // internal context
+    bool stopAtNonOption;
+    // Internal variables
     int argc;
     const char **argv;
     const char **out;
@@ -271,13 +264,12 @@ Argparser* Argparser_new()
     return self;
 }
 
-void Argparser_init(Argparser* self,
-    ArgparserOption* options, const char* const* usages, int flags)
+void Argparser_init(Argparser* self, ArgparserOption* options, const char* const* usages)
 {
-    self->options     = options;
-    self->usages      = usages;
-    self->flags       = flags;
-    self->valid       = true;
+    self->options = options;
+    self->usages = usages;
+    self->stopAtNonOption = false;
+    self->valid = true;
 }
 
 void Argparser_setDescription(Argparser* self, const char* description)
@@ -287,7 +279,12 @@ void Argparser_setDescription(Argparser* self, const char* description)
 
 void Argparser_setEpilog(Argparser* self, const char* epilog)
 {
-    self->epilog      = epilog;
+    self->epilog = epilog;
+}
+
+void Argparser_setStopAtNonOption(Argparser* self, bool stop)
+{
+    self->stopAtNonOption = stop;
 }
 
 void Argparser_clear(Argparser* self)
@@ -405,7 +402,7 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
     for (; self->argc; self->argc--, self->argv++) {
         const char *arg = self->argv[0];
         if (arg[0] != '-' || !arg[1]) {
-            if (self->flags & ARGPARSER_STOP_AT_NON_OPTION) {
+            if (self->stopAtNonOption) {
                 goto end;
             }
             // if it's not option or is a single char '-', copy verbatim
