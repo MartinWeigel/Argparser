@@ -2,11 +2,15 @@
 #include "Argparser.h"
 #include <stdbool.h>
 
-ArgparserResult test_callback(Argparser* argparser, const ArgparserOption* option)
+// Callback checks if the given value is between 0 and 10 or exits
+void test_callback(Argparser* argparser, const ArgparserOption* option)
 { 
-    int* value = ((int*)option->value);
-    printf("Callback called with value: %d\n", *value);
-    return ARGPARSER_RESULT_SUCCESS;
+    int value = *((int*)option->value);
+
+    if (value < 0 || value > 10)
+        Argparser_exitDueToError(argparser, option, "value out of range [0, 10]");
+
+    printf("Callback called with value: %d\n", value);
 }
 
 int main(int argc, const char **argv)
@@ -40,7 +44,7 @@ int main(int argc, const char **argv)
         ARGPARSER_OPT_BOOL('7', "seven77", &pNumeric, "example with numeric names"),
 
         ARGPARSER_OPT_GROUP("Options with Callbacks"),
-        ARGPARSER_OPT_INT_CALLBACK('x', "callback", &pIntCallback, "example for an integer with callback", test_callback),
+        ARGPARSER_OPT_INT_CALLBACK('x', "callback", &pIntCallback, "example for an integer in range [0, 10]", test_callback),
         ARGPARSER_OPT_END()
     });
     Argparser_setUsage(argparser, "example [options] [[--] args");
