@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS += -std=c11 -Wall
-CLIBS = -lm
+CLIBS = 
 FILES = example.c
 
 ifeq ($(OS),Windows_NT) 

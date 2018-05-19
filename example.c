@@ -1,15 +1,11 @@
-#define ARGPARSE_IMPLEMENTATION
-#include "argparse.h"
+#define ARGPARSER_IMPLEMENTATION
+#include "Argparser.h"
 
 static const char *const usages[] = {
     "example [options] [[--] args]",
     "example [options]",
     NULL,
 };
-
-#define PERM_READ  (1<<0)
-#define PERM_WRITE (1<<1)
-#define PERM_EXEC  (1<<2)
 
 int main(int argc, const char **argv)
 {
@@ -22,7 +18,7 @@ int main(int argc, const char **argv)
     int perms = 0;
 
     // Define all application options
-    struct argparse_option options[] = {
+    ArgparserOption options[] = {
         OPT_HELP(),
         OPT_GROUP("Basic options"),
         OPT_BOOLEAN('f', "force", &force, "force to do"),
@@ -30,20 +26,17 @@ int main(int argc, const char **argv)
         OPT_STRING('p', "path", &path, "path to read"),
         OPT_INTEGER('i', "int", &int_num, "selected integer"),
         OPT_FLOAT('s', "float", &flt_num, "selected float"),
-        OPT_GROUP("Bits options"),
-        OPT_BIT(0, "read", &perms, "read perm", NULL, PERM_READ, OPT_NONEG),
-        OPT_BIT(0, "write", &perms, "write perm", NULL, PERM_WRITE),
-        OPT_BIT(0, "exec", &perms, "exec perm", NULL, PERM_EXEC),
         OPT_END(),
     };
 
     // Parse arguments
-    struct argparse argparse;
-    argparse_init(&argparse, options, usages, 0);
-    argparse_describe(&argparse,
-        "\nA brief description of what the program does and how it works.",
-        "\nAdditional description of the program after the description of the arguments.");
-    argc = argparse_parse(&argparse, argc, argv);
+    Argparser* argparser = Argparser_new();
+    Argparser_init(argparser, options, usages, 0);
+    Argparser_setDescription(argparser, "\nOptional brief description of what the program does and how it works.");
+    Argparser_setEpilog(argparser, "\nOptional description of the program after the description of the arguments.");
+    argc = Argparser_parse(argparser, argc, argv);
+    Argparser_clear(argparser);
+    Argparser_delete(argparser);
 
     // Display all results that are not their default
     if (force != 0)
