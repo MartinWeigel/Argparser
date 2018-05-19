@@ -282,8 +282,6 @@ void Argparser_usage(Argparser* self)
     if (self->description)
         fprintf(stdout, "%s\n", self->description);
 
-    fputc('\n', stdout);
-
     const struct ArgparserOption *options;
 
     // figure out best width
@@ -355,7 +353,7 @@ void Argparser_usage(Argparser* self)
 
     // print epilog
     if (self->epilog)
-        fprintf(stdout, "%s\n", self->epilog);
+        fprintf(stdout, "\n%s\n", self->epilog);
 }
 
 int Argparser_help_cb(Argparser* self, const ArgparserOption* option)

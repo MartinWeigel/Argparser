@@ -35,8 +35,8 @@ int main(int argc, const char **argv)
     Argparser* argparser = Argparser_new();
     Argparser_init(argparser, options);
     Argparser_setUsage(argparser, "example [options] [[--] args");
-    Argparser_setDescription(argparser, "\nOptional brief description of what the program does and how it works.");
-    Argparser_setEpilog(argparser, "\nOptional description of the program after the description of the arguments.");
+    Argparser_setDescription(argparser, "Optional brief description of what the program does and how it works.");
+    Argparser_setEpilog(argparser, "Optional description of the program after the description of the arguments.");
     argc = Argparser_parse(argparser, argc, argv);
     Argparser_clear(argparser);
     Argparser_delete(argparser);
