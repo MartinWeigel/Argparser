@@ -103,10 +103,6 @@ typedef struct Argparser {
 #include <assert.h>
 #include <errno.h>
 
-#define ARGPARSER_OPTFLAG_UNSET 1
-#define ARGPARSER_OPTFLAG_LONG  (1 << 1)
-
-
 Argparser* Argparser_new()
 {
     Argparser* self = malloc(sizeof(Argparser));
@@ -152,9 +148,9 @@ void Argparser_setStopAtNonOption(Argparser* self, bool stop)
     self->stopAtNonOption = stop;
 }
 
-void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, int flags)
+void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* reason, bool fromLongName)
 {
-    if (flags & ARGPARSER_OPTFLAG_LONG) {
+    if (fromLongName) {
         fprintf(stderr, "error: option `--%s` %s\n", opt->long_name, reason);
     } else {
         fprintf(stderr, "error: option `-%c` %s\n", opt->short_name, reason);
@@ -162,20 +158,24 @@ void Argparser_error(Argparser* self, const ArgparserOption* opt, const char* re
     exit(1);
 }
 
-int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
+int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, bool fromLongName)
 {
     const char *s = NULL;
     if (opt->value) {
         switch (opt->type) {
         case ARGPARSER_TYPE_BOOLEAN:
-            if (flags & ARGPARSER_OPTFLAG_UNSET) {
-                *(int *)opt->value = *(int *)opt->value - 1;
-            } else {
-                *(int *)opt->value = *(int *)opt->value + 1;
-            }
-            if (*(int *)opt->value < 0) {
-                *(int *)opt->value = 0;
-            }
+            if (self->optvalue) {
+                if(self->optvalue == NULL)
+                    *(bool *)opt->value = true;
+                else if(strlen(self->optvalue) == 1 && self->optvalue[0] == '1')
+                    *(bool *)opt->value = true;
+                else if(strlen(self->optvalue) == 1 && self->optvalue[0] == '0')
+                    *(bool *)opt->value = false;
+                else {
+                    Argparser_error(self, opt, "expects no value, 0, or 1", fromLongName);
+                }
+            } else 
+                *(bool *)opt->value = true;
             break;
         case ARGPARSER_TYPE_STRING:
             if (self->optvalue) {
@@ -185,7 +185,7 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
                 self->argc--;
                 *(const char **)opt->value = *++self->argv;
             } else {
-                Argparser_error(self, opt, "requires a value", flags);
+                Argparser_error(self, opt, "requires a value", fromLongName);
             }
             break;
         case ARGPARSER_TYPE_INTEGER:
@@ -197,12 +197,12 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
                 self->argc--;
                 *(int *)opt->value = strtol(*++self->argv, (char **)&s, 0);
             } else {
-                Argparser_error(self, opt, "requires a value", flags);
+                Argparser_error(self, opt, "requires a value", fromLongName);
             }
             if (errno) 
-                Argparser_error(self, opt, strerror(errno), flags);
+                Argparser_error(self, opt, strerror(errno), fromLongName);
             if (s[0] != '\0')
-                Argparser_error(self, opt, "expects an integer value", flags);
+                Argparser_error(self, opt, "expects an integer value", fromLongName);
             break;
         case ARGPARSER_TYPE_FLOAT:
             errno = 0; 
@@ -213,12 +213,12 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, int flags)
                 self->argc--;
                 *(float *)opt->value = strtof(*++self->argv, (char **)&s);
             } else {
-                Argparser_error(self, opt, "requires a value", flags);
+                Argparser_error(self, opt, "requires a value", fromLongName);
             }
             if (errno) 
-                Argparser_error(self, opt, strerror(errno), flags);
+                Argparser_error(self, opt, strerror(errno), fromLongName);
             if (s[0] != '\0')
-                Argparser_error(self, opt, "expects a numerical value", flags);
+                Argparser_error(self, opt, "expects a numerical value", fromLongName);
             break;
         default:
             assert(0);
@@ -254,7 +254,7 @@ int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
     for (; options->type != ARGPARSER_TYPE_END; options++) {
         if (options->short_name == *self->optvalue) {
             self->optvalue = self->optvalue[1] ? self->optvalue + 1 : NULL;
-            return Argparser_getvalue(self, options, 0);
+            return Argparser_getvalue(self, options, false);
         }
     }
     return ARGPARSER_RESULT_UNKNOWN;
@@ -263,17 +263,27 @@ int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
 int Argparser_long_opt(Argparser* self, const ArgparserOption* options)
 {
     for (; options->type != ARGPARSER_TYPE_END; options++) {
-        if (!options->long_name)
+        if (!options->long_name || strlen(options->long_name) < 1)
             continue;
 
+        // Check if the option matches current name
         size_t nameLength = strlen(options->long_name);
         const char *rest = strncmp(self->argv[0] + 2, options->long_name, nameLength) ?
             NULL : self->argv[0] + 2 + nameLength;
+
         if (rest) {
-            if (*rest != '=')
-                continue;
-            self->optvalue = rest + 1;
-            return Argparser_getvalue(self, options, ARGPARSER_OPTFLAG_LONG);
+            // Set the value of the current option
+            if (*rest == '=') {
+                self->optvalue = rest + 1;
+            } else {
+                // There is no value. Only accept this for boolean or skip
+                if (options->type == ARGPARSER_TYPE_BOOLEAN)
+                    self->optvalue = NULL;
+                else
+                    continue;
+            }
+
+            return Argparser_getvalue(self, options, true);
         }
     }
     return ARGPARSER_RESULT_UNKNOWN;
@@ -341,14 +351,15 @@ void Argparser_usage(Argparser* self)
         if (options->long_name) {
             pos += fprintf(stdout, "--%s", options->long_name);
         }
+        
         if (options->type == ARGPARSER_TYPE_INTEGER) {
             pos += fprintf(stdout, "=<int>");
-        }
-        if (options->type == ARGPARSER_TYPE_FLOAT) {
+        } else if (options->type == ARGPARSER_TYPE_FLOAT) {
             pos += fprintf(stdout, "=<flt>");
         } else if (options->type == ARGPARSER_TYPE_STRING) {
             pos += fprintf(stdout, "=<str>");
         }
+
         if (pos <= usage_opts_width) {
             pad = usage_opts_width - pos;
         } else {
