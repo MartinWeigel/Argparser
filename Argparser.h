@@ -316,13 +316,13 @@ void Argparser_usage(Argparser* self)
         if ((options)->long_name) {
             len += strlen((options)->long_name) + 2;
         }
+
         if (options->type == ARGPARSER_TYPE_INTEGER) {
             len += strlen("=<int>");
-          }
-        if (options->type == ARGPARSER_TYPE_FLOAT) {
-            len += strlen("=<flt>");
+        } else if (options->type == ARGPARSER_TYPE_FLOAT) {
+            len += strlen("=<float>");
         } else if (options->type == ARGPARSER_TYPE_STRING) {
-            len += strlen("=<str>");
+            len += strlen("=<string>");
         }
         len = (len + 3) - ((len + 3) & 3);
         if (usage_opts_width < len) {
@@ -355,9 +355,9 @@ void Argparser_usage(Argparser* self)
         if (options->type == ARGPARSER_TYPE_INTEGER) {
             pos += fprintf(stdout, "=<int>");
         } else if (options->type == ARGPARSER_TYPE_FLOAT) {
-            pos += fprintf(stdout, "=<flt>");
+            pos += fprintf(stdout, "=<float>");
         } else if (options->type == ARGPARSER_TYPE_STRING) {
-            pos += fprintf(stdout, "=<str>");
+            pos += fprintf(stdout, "=<string>");
         }
 
         if (pos <= usage_opts_width) {
