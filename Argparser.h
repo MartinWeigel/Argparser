@@ -20,56 +20,7 @@ int Argparser_parse(Argparser* self, int argc, const char **argv);
 void Argparser_clear(Argparser* self);
 void Argparser_delete(Argparser* self);
 
-enum ArgparserOptionType {
-    /* special */
-    ARGPARSER_TYPE_END,
-    ARGPARSER_TYPE_GROUP,
-    /* options with no arguments */
-    ARGPARSER_TYPE_BOOLEAN,
-    /* options with arguments (optional or required) */
-    ARGPARSER_TYPE_INTEGER,
-    ARGPARSER_TYPE_FLOAT,
-    ARGPARSER_TYPE_STRING,
-};
-
-
-/**
- *  argparser option
- *
- *  `type`:
- *    holds the type of the option, you must have an ARGPARSER_TYPE_END last in your
- *    array.
- *
- *  `short_name`:
- *    the character to use as a short option name, '\0' if none.
- *
- *  `long_name`:
- *    the long option name, without the leading dash, NULL if none.
- *
- *  `value`:
- *    stores pointer to the value to be filled.
- *
- *  `help`:
- *    the short help message associated to what the option does.
- *    Must never be NULL (except for ARGPARSER_TYPE_END).
- *
- *  `callback`:
- *    function is called when corresponding argument is parsed.
- *    when called, the value is set in ArgparserOption->value.
- */
-typedef struct ArgparserOption {
-    enum ArgparserOptionType type;
-    const char short_name;
-    const char *long_name;
-    void *value;
-    const char *help;
-    Argparser_callback *callback;
-} ArgparserOption;
-
-// Built-in callbacks
-int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
-
-// Macros to create ArgparserOption
+// Public macros for creation of ArgparserOption
 #define ARGPARSER_OPT_BOOL(shortName, longName, valuePtr, description) \
     { ARGPARSER_TYPE_BOOLEAN, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_BOOL_CALLBACK(shortName, longName, valuePtr, description, callback) \
@@ -90,26 +41,49 @@ int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
 #define ARGPARSER_OPT_STRING_CALLBACK(shortName, longName, valuePtr, description, callback) \
     { ARGPARSER_TYPE_STRING, shortName, longName, valuePtr, description, callback }
 
-#define ARGPARSER_OPT_END()                  { ARGPARSER_TYPE_END, 0, NULL, NULL, 0, NULL }
 #define ARGPARSER_OPT_GROUP(description)     { ARGPARSER_TYPE_GROUP, 0, NULL, NULL, description, NULL }
+#define ARGPARSER_OPT_END()                  { ARGPARSER_TYPE_END, 0, NULL, NULL, 0, NULL }
+
+int Argparser_help_cb(Argparser* self, const ArgparserOption* option);
 #define ARGPARSER_OPT_HELP()       \
     ARGPARSER_OPT_BOOL_CALLBACK('h', "help", NULL, "show this help message and exit", Argparser_help_cb)
+
+
+
+// Definition of data structures
+// Please only modify them through public functions
+enum ArgparserOptionType {
+    ARGPARSER_TYPE_END,
+    ARGPARSER_TYPE_GROUP,
+    ARGPARSER_TYPE_BOOLEAN,
+    ARGPARSER_TYPE_INTEGER,
+    ARGPARSER_TYPE_FLOAT,
+    ARGPARSER_TYPE_STRING,
+};
+
+typedef struct ArgparserOption {
+    enum ArgparserOptionType type;
+    const char short_name;
+    const char *long_name;
+    void *value;
+    const char *help;
+    Argparser_callback *callback;
+} ArgparserOption;
 
 typedef struct Argparser {
     bool valid;
     const ArgparserOption *options;
     const char *const *usages;
-    const char *description;    // a description after usage
-    const char *epilog;         // a description at the end
+    const char *description;
+    const char *epilog;
     bool stopAtNonOption;
     // Internal variables
     int argc;
     const char **argv;
     const char **out;
     int cpidx;
-    const char *optvalue;       // current option value
+    const char *optvalue;
 } Argparser;
-
 
 
 
