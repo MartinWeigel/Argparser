@@ -231,23 +231,6 @@ int Argparser_getvalue(Argparser* self, const ArgparserOption* opt, bool fromLon
     return ARGPARSER_RESULT_SUCCESS;
 }
 
-void Argparser_options_check(const ArgparserOption* options)
-{
-    for (; options->type != ARGPARSER_TYPE_END; options++) {
-        switch (options->type) {
-        case ARGPARSER_TYPE_END:
-        case ARGPARSER_TYPE_BOOLEAN:
-        case ARGPARSER_TYPE_INTEGER:
-        case ARGPARSER_TYPE_FLOAT:
-        case ARGPARSER_TYPE_STRING:
-        case ARGPARSER_TYPE_GROUP:
-            continue;
-        default:
-            fprintf(stderr, "wrong option type: %d", options->type);
-            break;
-        }
-    }
-}
 
 int Argparser_short_opt(Argparser* self, const ArgparserOption* options)
 {
@@ -394,8 +377,6 @@ int Argparser_parse(Argparser* self, int argc, const char **argv)
     self->argc = argc - 1;
     self->argv = argv + 1;
     self->out  = argv;
-
-    Argparser_options_check(self->options);
 
     for (; self->argc; self->argc--, self->argv++) {
         const char *arg = self->argv[0];
