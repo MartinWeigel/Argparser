@@ -1,47 +1,65 @@
 # Argparser
 
-A single-header command line argument-parser library written in C.
+*Argparser* is a single-header command line argument-parser library written in C.
 
-## Description
+Arguments parsing is common task for all kinds of applications.
+Parsing the given arguments is an important but cumbersome task.
+This library can ease argument parsing in your existing or future C applications.
 
-This library is inspired by parse-options.c (git) and python's argparse
-module.
+Using *Argparser* in your application is simple.
+Just add `Argparser.h` to your project directory and include it using:
 
-Arguments parsing is common task in cli program, but traditional `getopt`
-libraries are not easy to use. This library provides high-level arguments
-parsing solutions.
+```C
+    #define ARGPARSER_IMPLEMENTATION
+    #include "Argparser.h"
+```
 
-The program defines what arguments it requires, and `argparse` will figure
-out how to parse those out of `argc` and `argv`, it also automatically
-generates help and usage messages and issues errors when users give the
-program invalid arguments.
+Afterwards, you can specify the options that are used by your application.
+*Argparser* figures out how to parse them out of `argc` and `argv`.
+The options will automatically be filled in the given variables.
 
-Please see the file `example.c` to learn how to use the library.
+You can also bind callback-functions to specific options.
+They are automatically called after the option was processed.
+This allows for more control over the entered input.
+For example, it can be used to restrict the input range, accept only valid file paths, or to modify a given value.
 
+Last but not least, *Argparser* automatically generates help and usage messages.
+
+An example can be found in [`example.c`](https://github.com/MartinWeigel/Argparser/blob/master/example.c).
+
+*Argparser* is based on [`argparse`](https://github.com/Cofyc/argparse) written by Yecheng Fu.
+The library is licensed under the [MIT license](https://github.com/MartinWeigel/Argparser/blob/master/LICENSE)
 
 ## Features
 
 - Single-header library for easy integration into existing projects
-- Handles both optional and positional arguments
-- Produces informative usage messages
+- Short (`-n`) and long (`--name`) option names
+- Callbacks for advanced input control
+- Returns the remaining command line arguments for easier processing
+- Produces informative usage messages (`--help`)
 - Issues errors when invalid arguments are given
 
 
 ## Supported Arguments
 
-There are basically three types of options:
+*Argparser* currently supports four option types:
 
- - boolean options
- - options with mandatory argument
- - options with optional argument
+1. boolean
+2. int
+3. float
+4. string
 
-There are basically two forms of options:
+They can be specified in two ways:
 
- - short option consist of one dash (`-`) and one alphanumeric character.
- - long option begin with two dashes (`--`) and some alphanumeric characters.
+1. *Short options* consist of one dash (`-`) and one alphanumeric character.
+   They are usually followed by their value (`-b 0`/`-b 1`).
+   Boolean-options without a value are set to `true`, i.e., `-b` equals `-b 1`).
+   In this case, their short options can be bundled, i.e., `-a -b` equals `-ab`.
+2. *Long options* begin with two dashes (`--`) and some alphanumeric characters.
+   They are followed by `=` and their value, e.g. `--name=Martin`
+   Boolean-options do not need to set a value `--debug`.
 
-Short options may be bundled, e.g. `-a -b` can be specified as `-ab`.
+All option names are case-sensitive.
 
-Options are case-sensitive.
-
-Options and non-option arguments can clearly be separated using the `--` option.
+Options and other arguments can clearly be separated using the `--` option.
+The parser skips all arguments after `--` and keeps them available in `argv`.

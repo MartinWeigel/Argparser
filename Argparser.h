@@ -2,7 +2,6 @@
 // Copyright (C) 2018 Martin Weigel <mail@MartinWeigel.com>
 // License: MIT
 #pragma once
-#include <stdint.h>
 #include <stdbool.h>
 
 // Type definitions
