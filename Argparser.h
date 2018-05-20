@@ -4,25 +4,83 @@
 #pragma once
 #include <stdbool.h>
 
+//******************************************************************************
 // Type definitions
+//******************************************************************************
+/**
+ * Argparser context: Should be created by calling `Argparser_new()`.
+ */
 typedef struct Argparser Argparser;
+/**
+ * An option: Should be created using macros, e.g. ARGPARSER_OPT_BOOL(...).
+ */
 typedef struct ArgparserOption ArgparserOption;
-
+/**
+ * Callback-method definition used in ArgparserOption.
+ * The callback is called after an ArgparserOption value is set.
+ * Callbacks should be passed to macros, e.g. ARGPARSER_OPT_BOOL_CALLBACK(...).
+ */
 typedef void Argparser_callback(Argparser* self, const ArgparserOption* option);
 
+
+//******************************************************************************
 // Public functions
+//******************************************************************************
+/**
+ * Allocates the memory structure for Argparser.
+ */
 Argparser* Argparser_new();
+/**
+ * Initializes Argparser with the given options.
+ * @options:
+ *      Array with all options. Options should be created using the macros below.
+ */
 void Argparser_init(Argparser* self, ArgparserOption* options);
+/**
+ * Optional method to set the usage-text in the help message.
+ */
 void Argparser_setUsage(Argparser* self, const char* usage);
+/**
+ * Optional method to set the text above the options in the help message.
+ */
 void Argparser_setDescription(Argparser* self, const char* description);
+/**
+ * Optional method to set an additional text below the options in the help message.
+ */
 void Argparser_setEpilog(Argparser* self, const char* epilog);
+/**
+ * The parser can stop parsing when first non-option occurs.
+ * @stop:
+ *      false: the parser parses all arguments (default).
+ *      true: the parser skips options after first argument.
+ *            E.g., `--opt1 arg --opt2` will be interpreted as `--opt1 -- arg --opt2`.
+ *            Hence, it does not parse `--opt2` and returns it in `argv`.
+ */
 void Argparser_setStopAtNonOption(Argparser* self, bool stop);
+/**
+ * Parses the given command line arguments.
+ * @return:
+ *      Remaining amount of arguments in `argv`, usually set to `argc`.
+ */
 int Argparser_parse(Argparser* self, int argc, const char **argv);
+/**
+ * Default error-handler for parsing errors, exits program when called.
+ * Should be called from callbacks if parsing errors occurs, e.g. if value is out-of-range.
+ */
 void Argparser_exitDueToError(Argparser* self, const ArgparserOption* option, const char* reason);
+/**
+ * Invalidates data inside the given Argparser context.
+ */
 void Argparser_clear(Argparser* self);
+/**
+ * Deletes the given Argparser context and frees its memory.
+ */
 void Argparser_delete(Argparser* self);
 
+
+//******************************************************************************
 // Public macros for creation of ArgparserOption
+//******************************************************************************
 #define ARGPARSER_OPT_BOOL(shortName, longName, valuePtr, description) \
     { ARGPARSER_TYPE_BOOLEAN, shortName, longName, valuePtr, description }
 #define ARGPARSER_OPT_BOOL_CALLBACK(shortName, longName, valuePtr, description, callback) \
@@ -52,8 +110,10 @@ void Argparser_exitForHelp(Argparser* self, const ArgparserOption* option);
 
 
 
+//******************************************************************************
 // Definition of data structures
 // Please only modify them through public functions
+//******************************************************************************
 enum ArgparserOptionType {
     ARGPARSER_TYPE_END,
     ARGPARSER_TYPE_GROUP,
@@ -88,6 +148,11 @@ typedef struct Argparser {
 
 
 
+//******************************************************************************
+// Implementation section. Include using:
+// #define ARGPARSER_IMPLEMENTATION
+// #include "Argparser.h"
+//******************************************************************************
 #ifdef ARGPARSER_IMPLEMENTATION
 
 #include <stdio.h>
