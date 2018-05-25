@@ -39,7 +39,7 @@ int main(int argc, const char **argv)
 
         ARGPARSER_OPT_GROUP("More Options"),
         ARGPARSER_OPT_BOOL('A', "UpperChars", &pUpperCharacters, "example with upper characters"),
-        ARGPARSER_OPT_BOOL('\0', "no-short", &pNoShort, "example without short name"),
+        ARGPARSER_OPT_BOOL(0, "no-short", &pNoShort, "example without short name"),
         ARGPARSER_OPT_BOOL('s', NULL, &pNoLong, "example with no long name"),
         ARGPARSER_OPT_BOOL('7', "seven77", &pNumeric, "example with numeric names"),
 

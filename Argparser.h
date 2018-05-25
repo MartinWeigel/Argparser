@@ -382,7 +382,7 @@ void Argparser_parseShortOption(Argparser* self, const ArgparserOption* options)
     {
         // Single options might carry a value
         for (; options->type != ARGPARSER_TYPE_END; options++) {
-            if (options->shortName == *(self->argv[0]+1)) {
+            if (options->shortName != 0 && options->shortName == *(self->argv[0]+1)) {
                 if (self->argc > 1 && self->argv[1] && self->argv[1][0] != '-') {
                     // Use next argument as a value, remove it from arguments
                     Argparser_parseValue(self, options, self->argv[1]);
