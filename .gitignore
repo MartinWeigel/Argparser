@@ -1,6 +1,2 @@
-tags
-test_argparse
-*.[ao]
-*.dylib
-*.so
-*.exe
+example
+example.exe

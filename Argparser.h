@@ -1,6 +1,27 @@
-// Copyright (C) 2012-2015 Yecheng Fu <cofyc.jackson at gmail dot com>
-// Copyright (C) 2018 Martin Weigel <mail@MartinWeigel.com>
-// License: MIT
+/**
+ * Argparser.h
+ *
+ * Copyright (C) 2012-2015 Yecheng Fu <cofyc.jackson at gmail dot com>
+ * Copyright (C) 2018 Martin Weigel <mail@MartinWeigel.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 #pragma once
 #include <stdbool.h>
 
@@ -114,7 +135,8 @@ void Argparser_exitForHelp(Argparser* self, const ArgparserOption* option);
 // Definition of data structures
 // Please only modify them through public functions
 //******************************************************************************
-enum ArgparserOptionType {
+enum ArgparserOptionType
+{
     ARGPARSER_TYPE_END,
     ARGPARSER_TYPE_GROUP,
     ARGPARSER_TYPE_BOOLEAN,
@@ -123,7 +145,8 @@ enum ArgparserOptionType {
     ARGPARSER_TYPE_STRING,
 };
 
-typedef struct ArgparserOption {
+typedef struct ArgparserOption
+{
     enum ArgparserOptionType type;
     const char shortName;
     const char *longName;
@@ -132,7 +155,8 @@ typedef struct ArgparserOption {
     Argparser_callback *callback;
 } ArgparserOption;
 
-typedef struct Argparser {
+typedef struct Argparser
+{
     bool valid;
     const ArgparserOption *options;
     const char *usage;
@@ -270,7 +294,7 @@ void Argparser_usage(Argparser* self)
         if (options->longName) {
             pos += fprintf(stdout, "--%s", options->longName);
         }
-        
+
         if (options->type == ARGPARSER_TYPE_INTEGER) {
             pos += fprintf(stdout, "=<int>");
         } else if (options->type == ARGPARSER_TYPE_FLOAT) {
@@ -294,7 +318,7 @@ void Argparser_usage(Argparser* self)
 }
 
 void Argparser_exitForHelp(Argparser* self, const ArgparserOption* option)
-{ 
+{
     Argparser_usage(self);
     exit(0);
 }
@@ -326,7 +350,7 @@ void Argparser_parseValue(Argparser* self, const ArgparserOption* option, const 
                 } else {
                     Argparser_exitDueToError(self, option, "expects no value, 0, or 1");
                 }
-            } else 
+            } else
                 *(bool *)option->value = true;
             break;
 
@@ -339,26 +363,26 @@ void Argparser_parseValue(Argparser* self, const ArgparserOption* option, const 
             break;
 
         case ARGPARSER_TYPE_INTEGER:
-            errno = 0; 
+            errno = 0;
             if (optvalue && strlen(optvalue) > 0) {
                 *(int *)option->value = strtol(optvalue, (char **)&s, 0);
             } else {
                 Argparser_exitDueToError(self, option, "requires a value");
             }
-            if (errno) 
+            if (errno)
                 Argparser_exitDueToError(self, option, strerror(errno));
             if (s[0] != '\0')
                 Argparser_exitDueToError(self, option, "expects an integer value");
             break;
 
         case ARGPARSER_TYPE_FLOAT:
-            errno = 0; 
+            errno = 0;
             if (optvalue && strlen(optvalue) > 0) {
                 *(float *)option->value = strtof(optvalue, (char **)&s);
             } else {
                 Argparser_exitDueToError(self, option, "requires a value");
             }
-            if (errno) 
+            if (errno)
                 Argparser_exitDueToError(self, option, strerror(errno));
             if (s[0] != '\0')
                 Argparser_exitDueToError(self, option, "expects a numerical value");
